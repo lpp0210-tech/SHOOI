@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CH | 國家擬人：沉浸式敘事</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400&family=Noto+Serif+TC:wght@600;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #0a0a0a;
+            --accent-gold: #d4af37;
+            --text-light: #e0e0e0;
+            --frame-border: #ffffff;
+            --transition-speed: 1.2s;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-light);
+            font-family: 'Noto Sans TC', sans-serif;
+            overflow-x: hidden;
+            line-height: 1.8;
+        }
+
+        /* --- 視覺特效：全螢幕噪點 --- */
+        .film-grain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.05;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* --- 電影黑邊 (Letterbox) --- */
+        .letterbox {
+            position: fixed;
+            left: 0;
+            width: 100%;
+            height: 8vh;
+            background: #000;
+            z-index: 1000;
+        }
+        .letterbox-top { top: 0; border-bottom: 1px solid rgba(212, 175, 55, 0.15); }
+        .letterbox-bottom { bottom: 0; border-top: 1px solid rgba(212, 175, 55, 0.15); }
+
+        h1, h2, h3 {
+            font-family: 'Noto Serif TC', serif;
+            letter-spacing: 0.15em;
+            color: var(--accent-gold);
+        }
+
+        /* --- 第一幕：首頁 --- */
+        .hero {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .hero-parallax-bg {
+            position: absolute;
+            top: -10%;
+            left: -5%;
+            width: 110%;
+            height: 120%;
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
+                        url('https://github.com/lpp0210-tech/SHOOI/blob/main/1754415219091-MwP0H22J7I_960-1280.webp?raw=true');
+            background-size: cover;
+            background-position: center;
+            z-index: -1;
+            will-change: transform;
+        }
+
+        .hero-content {
+            text-align: center;
+            z-index: 2;
+        }
+
+        .hero-content h1 {
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 900;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+        }
+
+        .hero-content p {
+            font-size: 1.2rem;
+            letter-spacing: 0.8em;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        /* --- 敘事區塊通用佈局 --- */
+        .section {
+            padding: 15vh 10%;
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 4rem;
+        }
+
+        .section:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        .text-content {
+            flex: 1;
+            max-width: 500px;
+        }
+
+        .text-content h2 {
+            font-size: 2.2rem;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .text-content h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 60px;
+            height: 2px;
+            background: var(--accent-gold);
+        }
+
+        .section:nth-child(even) .text-content h2::after {
+            left: auto;
+            right: 0;
+        }
+
+        .text-content p {
+            font-size: 1.1rem;
+            color: #aaa;
+            text-align: justify;
+        }
+
+        /* --- 實體畫框 (Polaroid) --- */
+        .image-frame {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            perspective: 1000px;
+        }
+
+        .polaroid {
+            background: var(--frame-border);
+            padding: 15px 15px 60px 15px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            transform: rotate(-3deg);
+            transition: transform 0.6s ease;
+            max-width: 420px;
+            width: 100%;
+        }
+
+        .section:nth-child(even) .polaroid {
+            transform: rotate(3deg);
+        }
+
+        .polaroid img {
+            width: 100%;
+            height: auto;
+            filter: sepia(20%) contrast(1.1);
+            display: block;
+        }
+
+        /* --- 第五幕：典藏入口 (Shop Section) --- */
+        .archive-section {
+            padding: 10vh 10% 20vh;
+            text-align: center;
+            background: linear-gradient(to bottom, transparent, rgba(212, 175, 55, 0.05));
+        }
+
+        .archive-container {
+            max-width: 800px;
+            margin: 0 auto;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            padding: 4rem 2rem;
+            position: relative;
+        }
+
+        .archive-container h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .archive-container p {
+            margin-bottom: 2.5rem;
+            color: #888;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .shopee-btn {
+            display: inline-block;
+            padding: 1rem 3rem;
+            border: 1px solid var(--accent-gold);
+            color: var(--accent-gold);
+            text-decoration: none;
+            font-family: 'Noto Serif TC', serif;
+            letter-spacing: 0.2em;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shopee-btn:hover {
+            background: var(--accent-gold);
+            color: #000;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+        }
+
+        /* --- Scroll Reveal 基礎 --- */
+        .reveal {
+            opacity: 0;
+            transform: translateY(60px);
+            transition: opacity var(--transition-speed) ease, transform var(--transition-speed) ease;
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* --- Footer --- */
+        footer {
+            padding: 5vh 0 10vh;
+            text-align: center;
+        }
+
+        .copyright {
+            font-size: 0.8rem;
+            letter-spacing: 0.2em;
+            color: #444;
+        }
+
+        /* --- RWD --- */
+        @media (max-width: 992px) {
+            .section, .section:nth-child(even) {
+                flex-direction: column;
+                text-align: center;
+                padding: 10vh 5%;
+            }
+            .polaroid { transform: rotate(0deg) !important; }
+            .text-content h2::after { left: 50% !important; transform: translateX(-50%); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="film-grain"></div>
+    <div class="letterbox letterbox-top"></div>
+    <div class="letterbox letterbox-bottom"></div>
+
+    <section class="hero">
+        <div class="hero-parallax-bg" id="heroBg"></div>
+        <div class="hero-content">
+            <h1>赤紅的宿命</h1>
+            <p>The Echo of Crimson History</p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="text-content reveal">
+            <h2>第二幕：歲月長歌</h2>
+            <p>他在灰燼中睜開眼，胸前的五星刻印著古老文明的重量。這不是一段簡單的旅程，而是一場跨越數千年的長征。每一吋土地都滲透著先輩的汗水，每一陣風都低語著曾經的輝煌與苦難。</p>
+        </div>
+        <div class="image-frame reveal">
+            <div class="polaroid">
+                <img src="https://github.com/lpp0210-tech/SHOOI/blob/main/1773544872953-eWBJB9e82P_960-1280.webp?raw=true" alt="Memory 1">
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="text-content reveal">
+            <h2>第三幕：鋼鐵意志</h2>
+            <p>在霓虹與鋼鐵築起的叢林中，他學會了隱藏溫柔。冷峻的外表下，是永不停歇的脈動。他在世界的牌局中優雅地博弈，每一步棋都走得驚心動魄。這是現代的敘事，是在高速旋轉的齒輪中，守護那一份初衷。</p>
+        </div>
+        <div class="image-frame reveal">
+            <div class="polaroid">
+                <img src="https://github.com/lpp0210-tech/SHOOI/blob/main/1777039482968-P79Kq37Vzn_960-1280.webp?raw=true" alt="Memory 2">
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="text-content reveal">
+            <h2>第四幕：絲路餘暉</h2>
+            <p>當夜色降臨，他會獨自坐在長城的殘垣上，聽風訴說西域的駝鈴。那份孤傲不是因為疏遠，而是因為肩負了太多的期許。他在等待一個盛世的重逢，在等待那抹紅色的旗幟，真正消融在全人類的幸福之中。</p>
+        </div>
+        <div class="image-frame reveal">
+            <div class="polaroid">
+                <img src="https://github.com/lpp0210-tech/SHOOI/blob/main/1770709278025-SMMB4JL4GM_960-1280.webp?raw=true" alt="Memory 3">
+            </div>
+        </div>
+    </section>
+
+    <section class="archive-section reveal">
+        <div class="archive-container">
+            <h3>第五幕：觸摸碎片</h3>
+            <p>歷史不應只存在於螢幕，更應轉化為指尖的觸感。我們將這些瞬間凝結成實體貼紙，作為這段宏大敘事的微小見證。願這些碎片能陪伴你的日常，成為你故事的一部分。</p>
+            <a href="https://shopee.tw/-%E5%85%A8%E5%A0%B4%E6%BB%BF99%E5%87%BA%E8%B2%A8-240%E5%BC%B5CH%E5%9C%8B%E5%AE%B6%E6%93%AC%E4%BA%BA%E8%B2%BC%E7%B4%99CH%E4%BF%84%E7%93%B7%E7%BE%8E%E8%8B%B1CountryHumans%E4%BA%94%E5%B8%B8%E8%A3%9D%E9%A3%BE%E5%89%B5%E6%84%8F%E5%B0%8F%E8%B2%BC%E7%95%AB-%E4%B8%AD%E8%8F%AF%E6%95%B8%E7%A2%BC%E5%BA%AB-i.974537752.29655840108" target="_blank" class="shopee-btn">
+                前往蝦皮典藏館
+            </a>
+        </div>
+    </section>
+
+    <footer>
+        <div class="copyright">【銀星設計 | 網頁與作品集製作】</div>
+    </footer>
+
+    <script>
+        // 視差滾動
+        window.addEventListener('scroll', () => {
+            const scrollY = window.pageYOffset;
+            const heroBg = document.getElementById('heroBg');
+            heroBg.style.transform = `translateY(${scrollY * 0.4}px)`;
+        });
+
+        // 滾動揭示
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+    </script>
+</body>
+</html>
